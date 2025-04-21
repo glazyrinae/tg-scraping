@@ -1,5 +1,3 @@
-from collections import defaultdict
-from telethon.tl.types import ReactionEmoji
 from telethon.tl.types import InputPeerChannel
 from telethon.tl.functions.channels import GetMessagesRequest
 

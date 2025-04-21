@@ -1,7 +1,4 @@
 import os
-import asyncio
-from telethon import TelegramClient
-from telethon.sessions import StringSession
 from telethon import TelegramClient
 from config import load_config
 
