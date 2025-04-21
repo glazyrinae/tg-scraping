@@ -1,2 +1,2 @@
-# tg-scraping
+# telegram-scraping
 scraping for telegram channels

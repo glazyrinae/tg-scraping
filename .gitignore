@@ -1,0 +1,6 @@
+*.pyc
+.vscode/
+docker-compose.yml
+.env
+telethon_fastapi/app/saved_session/
+
