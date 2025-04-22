@@ -1,13 +1,19 @@
 from telethon.tl.types import InputPeerChannel
-from telethon.tl.functions.channels import GetMessagesRequest
+from telethon.tl.functions.channels import GetMessagesRequest, JoinChannelRequest
 
 
-async def test_connect(client) -> str:
+async def get_account_id(client):
     try:
         me = await client.get_me()
-        return f"ID: {me.id}, Имя: {me.first_name}"
+        return me.id
     except Exception as e:
         return f"Error: {e}"
+
+
+async def add_user_to_channel(client, channel_title: str) -> str:
+    channel = await client.get_entity(channel_title)
+    client(JoinChannelRequest(channel))
+    return f"this account just subscribed to {channel.title}"
 
 
 async def get_recent_info_posts(client, channel_title: str, limit: int = 10):
@@ -16,7 +22,9 @@ async def get_recent_info_posts(client, channel_title: str, limit: int = 10):
     posts = await client.get_messages(channel, limit=limit)
     for post in posts:
         cnt_comments_post = await get_count_comments_for_post(client, channel, post.id)
-        cnt_reactions_post = await get_count_reactions_for_post(client, channel, post.id)
+        cnt_reactions_post = await get_count_reactions_for_post(
+            client, channel, post.id
+        )
         resset_posts_info.append(
             {
                 "post_id": post.id,
@@ -24,7 +32,7 @@ async def get_recent_info_posts(client, channel_title: str, limit: int = 10):
                 "content": post.text,
                 "views": post.views if post.views else 0,
                 "comments": cnt_comments_post,
-                "reactions": cnt_reactions_post
+                "reactions": cnt_reactions_post,
             }
         )
     return resset_posts_info
@@ -41,6 +49,7 @@ async def get_count_comments_for_post(client, channel, post_id):
         return comments.total
     except Exception:
         return 0
+
 
 async def get_count_reactions_for_post(client, channel, post_id):
     try:
