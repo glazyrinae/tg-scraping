@@ -1,24 +1,73 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 from app.telethon_client.client import client
-from app.telethon_client.handlers import get_recent_info_posts, add_user_to_channel
+from app.telethon_client.handlers import get_post_info, get_posts_info, get_channel_info
+from app.exceptions import (
+    NotFoundException,
+    ForbiddenException,
+    InvalidException,
+    CustomErrorException,
+)
 
 router = APIRouter()
 
+# GET /tg-api/channels/{channel_name}/posts/?limit=100
 
-@router.get("/get-post-info/{channel_title}/{limit}")
-async def get_post_info(channel_title: str, limit: int = 10):
-    try:
-        res = await get_recent_info_posts(client, channel_title, limit)
+
+@router.get("/channels/{channel_name}/posts/")
+async def get_posts(channel_name: str, limit: int):
+    res = await get_posts_info(client, channel_name, limit=limit)
+    if res and isinstance(res, dict) and (code_error := res.get("code")):
+        message = res.get("message")
+        if code_error == "PostNotFoundError":
+            raise NotFoundException(message, code_error)
+        elif code_error == "ChannelPrivateError":
+            raise ForbiddenException(message, code_error)
+        elif code_error == "ChannelInvalidError":
+            raise InvalidException(message, code_error)
+        elif code_error == "ValueError":
+            raise NotFoundException(message, code_error)
+        elif code_error == "Exception":
+            raise CustomErrorException(500, "Не получен ответ от АПИ")
+    else:
         return res
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/add-user-in-channel/{channel_title}")
-async def add_user_in_channel(channel_title: str):
-    #@testblg35465
-    try:
-        res = await add_user_to_channel(client, channel_title)
+@router.get("/channels/{channel_name}/posts/{id}")
+async def get_post(channel_name: str, id: int):
+    res = await get_posts_info(client, channel_name, post_id=id)
+    if res and (code_error := res.get("code")):
+        message = res.get("message")
+        if code_error == "PostNotFoundError":
+            raise NotFoundException(message, code_error)
+        elif code_error == "ChannelPrivateError":
+            raise ForbiddenException(message, code_error)
+        elif code_error == "ChannelInvalidError":
+            raise InvalidException(message, code_error)
+        elif code_error == "ValueError":
+            raise NotFoundException(message, code_error)
+        elif code_error == "Exception":
+            raise CustomErrorException(500, "Не получен ответ от АПИ")
+    else:
         return res
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/channels/{channel_name}")
+async def get_channel(channel_name: str):
+    res = await get_channel_info(client, channel_name)
+    if res and (code_error := res.get("code")):
+        message = res.get("message")
+        if code_error == "UsernameNotOccupiedError":
+            raise NotFoundException(message, code_error)
+        elif code_error == "UsernameInvalidError":
+            raise InvalidException(message, code_error)
+        elif code_error == "ChannelPrivateError":
+            raise ForbiddenException(message, code_error)
+        elif code_error == "ChannelInvalidError":
+            raise InvalidException(message, code_error)
+        elif code_error == "ValueError":
+            raise NotFoundException(message, code_error)
+        elif code_error == "Exception":
+            raise CustomErrorException(500, "Не получен ответ от АПИ")
+    else:
+        return res
